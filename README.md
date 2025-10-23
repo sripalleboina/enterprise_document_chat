@@ -53,3 +53,12 @@ git push
 
 3. vectordb ##ondisk ##cloudbased ##inmemory
 
+##Groq Api Key Link
+```
+https://console.groq.com/keys
+```
+
+##Gemini Api Key Link
+```
+https://aistudio.google.com/api-keys
+```
