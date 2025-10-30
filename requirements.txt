@@ -7,5 +7,7 @@ langchain_community
 langchain_text_splitters
 pypdf
 faiss-cpu
+structlog
+PyMuPDF
 
 -e .
