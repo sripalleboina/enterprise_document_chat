@@ -110,6 +110,9 @@ if __name__ == "__main__":
     embedding_model = loader.load_embedding_model()
     print(f"Embedding model loaded: {embedding_model}")
     
+    result = embedding_model.embed_query("Sample text for embedding")
+    print(f"Embedding result: {result}")
+    
     llm_model = loader.load_llm()
     print(f"LLM model loaded: {llm_model}")
     
