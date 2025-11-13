@@ -72,7 +72,7 @@ if __name__ == "__main__":
     
     
     
-    pdf_path = r"C:\Users\sripa\enterprise_document_chat\data\doc_analysis\NIPS-2017-attention-is-all-you-need-Paper.pdf"
+    pdf_path = r"C:\Users\sripa\enterprise_document_chat\data\doc_analysis\sample.pdf"
     
     class DummyFile:
         def __init__(self, file_path):

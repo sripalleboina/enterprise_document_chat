@@ -9,6 +9,6 @@ pypdf
 faiss-cpu
 structlog
 PyMuPDF
-fitz
+
 
 -e .
