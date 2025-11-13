@@ -78,7 +78,7 @@ class ModelLoader:
         
         if provider == "google":
             llm = ChatGoogleGenerativeAI(
-                model_name=model_name,
+                model=model_name,
                 temperature=temperature,
                 max_tokens=max_tokens
             )
@@ -86,7 +86,7 @@ class ModelLoader:
         
         elif provider == "groq":
             llm = ChatGroq(
-                model_name=model_name,
+                model=model_name,
                 temperature=temperature,
                 max_tokens=max_tokens
             )
@@ -94,7 +94,7 @@ class ModelLoader:
         
         # elif provider == "openai":
             # llm = ChatOpenAI(
-            #     model_name=model_name,
+            #     model=model_name,
             #     temperature=temperature,
             #     max_tokens=max_tokens
             # )
