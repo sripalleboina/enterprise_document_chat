@@ -1,6 +1,6 @@
 import os
 import fitz
-import uuid
+import sys
 from datetime import datetime
 from logger.custom_logger import CustomLogger
 from exception.custom_exception import EnterpriseDocumentChatException
@@ -28,7 +28,7 @@ class DocumentHandler:
             
         except Exception as e:
             self.log.error(f"Error during DocumentHandler initialization: {e}")
-            raise EnterpriseDocumentChatException("Error initializing DocumentHandler", e) from e
+            raise EnterpriseDocumentChatException("Error initializing DocumentHandler", sys)
     
     def save_pdf(self, uploaded_file):
         try:
@@ -48,7 +48,7 @@ class DocumentHandler:
         
         except Exception as e:
             self.log.error(f"Error saving PDF: {e}")
-            raise EnterpriseDocumentChatException("Error saving PDF", e) from e
+            raise EnterpriseDocumentChatException("Error saving PDF", sys) 
     
     def read_pdf(self, pdf_path:str) -> str:
         try:
@@ -63,7 +63,7 @@ class DocumentHandler:
                     
         except Exception as e:
             self.log.error(f"Error reading PDF: {e}")
-            raise EnterpriseDocumentChatException("Error reading PDF", e) from e
+            raise EnterpriseDocumentChatException("Error reading PDF", sys)
     
     
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ from logger.custom_logger import CustomLogger
 logger = CustomLogger().get_logger(__file__)
 
 class EnterpriseDocumentChatException(Exception):
-    def __init__(self, error_message, error_detail: sys):
+    def __init__(self, error_message, error_detail):
         _, _, exc_tb = error_detail.exc_info()
         self.file_name = exc_tb.tb_frame.f_code.co_filename
         self.line_number = exc_tb.tb_lineno
