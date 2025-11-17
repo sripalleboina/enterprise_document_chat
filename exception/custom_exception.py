@@ -1,7 +1,6 @@
 import sys
 import traceback
-from logger.custom_logger import CustomLogger
-logger = CustomLogger().get_logger(__file__)
+
 
 class EnterpriseDocumentChatException(Exception):
     def __init__(self, error_message, error_detail):
@@ -25,5 +24,5 @@ if __name__ == "__main__":
         print(a)
     except Exception as e:
         app_exc=EnterpriseDocumentChatException(e, sys)
-        logger.error(app_exc)
+        # logger.error(app_exc)
         raise app_exc
