@@ -29,6 +29,8 @@ from src.document_chat.retrieval import ConversationalRAG
     # name="static",
 # )
 
+FAISS_BASE = os.getenv("FAISS_BASE", "faiss_index")
+UPLOAD_BASE = os.getenv("UPLOAD_BASE", "data")
 app = FastAPI(title="Enterprise Document Chat API", version="0.1")
 
 app.add_middleware(
@@ -63,10 +65,11 @@ class FastAPIFileAdapter:
 
 def _read_pdf_via_handler(handler: DocHandler, path:str) -> str:
     """ Utility function to read PDF using DocHandler """
-    try:
-        pass
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read PDF: {str(e)}")
+    if hasattr(handler, 'read_pdf'):
+        return handler.read_pdf(path)
+    if hasattr(handler, "read_"):
+        return handler.read_(path)
+    raise RuntimeError("DocHandler does not have a PDF reading method")
 
 @app.post("/analyze")
 async def analyze_document(file: UploadFile = File(...)) -> Any:
