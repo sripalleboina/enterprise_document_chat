@@ -7,3 +7,4 @@ logs/
 *.pyc
 data/
 test.py
+archive/
