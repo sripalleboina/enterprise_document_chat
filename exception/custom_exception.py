@@ -1,28 +1,58 @@
 import sys
 import traceback
-
+from typing import Optional, cast
 
 class EnterpriseDocumentChatException(Exception):
-    def __init__(self, error_message, error_detail):
-        _, _, exc_tb = error_detail.exc_info()
-        self.file_name = exc_tb.tb_frame.f_code.co_filename
-        self.line_number = exc_tb.tb_lineno
-        self.error_message = str(error_message)
-        self.traceback_str = ''.join(traceback.format_exception(*error_detail.exc_info()))
+    def __init__(self, error_message, error_details: Optional[object] = None):
         
-    def __str__(self):
-        return f"""
-            Error in {self.file_name} at line: {self.line_number} 
-            with message: {self.error_message}
-            Traceback:
-            {self.traceback_str}
-            """
+        if isinstance(error_message, BaseException):
+            norm_msg = str(error_message)
+        else:
+            norm_msg = str(error_message)
+            
+        exc_type = exc_value = exc_tb = None
+        if error_details is None:
+            exc_type, exc_value, exc_tb = sys.exc_info()
+        else:
+            if hasattr(error_details, "exc_info"):
+                exc_info_obj = cast(sys, error_details)
+                exc_type, exc_value, exc_tb = exc_info_obj.exc_info()
+            elif isinstance(error_details, BaseException):
+                exc_type, exc_value, exc_tb = type(error_details), error_details, error_details.__traceback__
+            else:
+                exc_type, exc_value, exc_tb = sys.exc_info()
+        
+        
+        last_tb = exc_tb
+        while last_tb and last_tb.tb_next:
+            last_tb = last_tb.tb_next
+        
+        self.file_name = last_tb.tb_frame.f_code.co_filename if last_tb else "Unknown"
+        self.lineno = last_tb.tb_lineno if last_tb else -1
+        self.error_message = norm_msg
+        
+        if exc_type and exc_tb:
+            self.traceback_str = ''.join(traceback.format_exception(exc_type, exc_value, exc_tb))
+        else:
+            self.traceback_str = ""
+            
+        super().__init__(self.__str__())
     
-if __name__ == "__main__": 
+    def __str__(self):
+        
+        base = f"Error in [{self.file_name}] at line [{self.lineno}] | Message: {self.error_message}"
+        if self.traceback_str:
+            return f"{base}\nTraceback:\n{self.traceback_str}"
+        return base
+    
+    
+    def __repr__(self):
+        return f"EnterpriseDocumentChatException(file={self.file_name!r}, line={self.lineno}, message={self.error_message!r})"
+    
+if __name__ == "__main__":
+    
     try:
         a = 1 / 0
-        print(a)
     except Exception as e:
-        app_exc=EnterpriseDocumentChatException(e, sys)
-        # logger.error(app_exc)
-        raise app_exc
+        raise EnterpriseDocumentChatException("Division failed", e) from e
+                
