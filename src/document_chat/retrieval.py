@@ -1,76 +1,117 @@
 import sys
 import os
 from operator import itemgetter
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
+
 from langchain_core.messages import BaseMessage
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.vectorstores import FAISS
+
 from utils.model_loader import ModelLoader
 from exception.custom_exception import EnterpriseDocumentChatException
-from logger.custom_logger import CustomLogger
+from logger import GLOBAL_LOGGER as log
 from prompt.prompt_library import PROMPT_REGISTRY
 from model.models import PromptType
 
 
 class ConversationalRAG:
-    def __init__(self, session_id:str, retriever=None):
+    """
+    LCEL-based Conversational RAG with lazy retriever initialization.
+
+    Usage:
+        rag = ConversationalRAG(session_id="abc")
+        rag.load_retriever_from_faiss(index_path="faiss_index/abc", k=5, index_name="index")
+        answer = rag.invoke("What is ...?", chat_history=[])
+    """
+    
+    def __init__(self, session_id: Optional[str], retriever=None):
         try:
-            self.log = CustomLogger().get_logger(__name__)
             self.session_id = session_id
+            
+            #Load LLM
             self.llm = self._load_llm()
             self.contextualize_prompt: ChatPromptTemplate = PROMPT_REGISTRY[PromptType.CONTEXTUALIZE_QUESTION.value]
             self.qa_prompt: ChatPromptTemplate = PROMPT_REGISTRY[PromptType.CONTEXT_QA.value]
-            if retriever is None:
-                raise ValueError("Retriever cannot be None")
+            
             self.retriever = retriever
-            self._build_lcel_chain()
-            self.log.info("ConversationalRAG initialized", session_id=self.session_id)
+            self.chain = None
+            if self.retriever is not None:
+                self._build_lcel_chain()
+                
+            log.info("ConversationalRAG initialized", session_id=self.session_id)
             
         except Exception as e:
-            self.log.error("FAiled to initialize ConversationalRAG", error=str(e))
+            log.error("FAiled to initialize ConversationalRAG", error=str(e))
             raise EnterpriseDocumentChatException("Initialization error in ConversationalRAG", sys)
+        
     
-    def load_retriever_from_faiss(self, index_path: str):
+    def load_retriever_from_faiss(
+        self,
+        index_path: str,
+        k: int = 5,
+        index_name: str = "index",
+        search_type: str = "similarity",
+        search_kwargs: Optional[Dict[str, Any]] = None,
+    ):
         """ 
-        Load a FAISS vectorstore from disk and convert to retriever.
+        Load FAISS vectorstore from disk and build retriever + LCEL chain.
         """
         try:
-            embeddings = ModelLoader().load_embeddings()
             if not os.path.isdir(index_path):
                 raise FileNotFoundError(f"FAISS index path not found: {index_path}")
-            vectorstore = FAISS.load_loacl(
+            
+            embeddings = ModelLoader().load_embedding_model()
+            vectorstore = FAISS.load_local(
                 index_path,
                 embeddings,
+                index_name=index_name,
                 allow_dangerous_deserialization=True,
             )
-            self.retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k":5})
-            self.log.info("FAISS retriever loaded successfully", index_path=index_path, session_id=self.session_id)
+            
+            if search_kwargs is None:
+                search_kwargs = {"k": k}
+                
+            self.retriever = vectorstore.as_retriever(search_type=search_type, search_kwargs=search_kwargs)
+            
+            self._build_lcel_chain()
+            
+            log.info(
+                "FAISS retriever loaded successfully", 
+                index_path=index_path, 
+                index_name=index_name, 
+                k=k,
+                session_id=self.session_id
+            )
             return self.retriever
                     
         except Exception as e:
-            self.log.error("Failed to load FAISS retriever", error=str(e))
+            log.error("Failed to load FAISS retriever", error=str(e))
             raise EnterpriseDocumentChatException("Error loading FAISS retriever", sys)
         
     def invoke(self, user_input:str, chat_history: Optional[List[BaseMessage]] = None)-> str:
         try:
+            if self.chain is None:
+                raise EnterpriseDocumentChatException(
+                    "RAG chain not initialized. Call load_retriever_from_faiss() before invoke().", sys
+                )
             chat_history = chat_history or []
             payload = {"input": user_input, "chat_history": chat_history}
             response = self.chain.invoke(payload)
             if not response:
-                self.log.warning("No answer generated", user_input=user_input, session_id=self.session_id)
+                log.warning("No answer generated", user_input=user_input, session_id=self.session_id)
                 return "no answer generated"
             
-            self.log.info("Chain invoked successfully", 
-                        user_input=user_input,
-                        session_id=self.session_id,
-                        answer_preview=response[:150]
-                        )
+            log.info(
+                "Chain invoked successfully", 
+                user_input=user_input,
+                session_id=self.session_id,
+                answer_preview=str(response)[:150],
+            )
             return response
     
         except Exception as e:
-            self.log.error("Failed to invoke ConversationalRAG", error=str(e))
+            log.error("Failed to invoke ConversationalRAG", error=str(e))
             raise EnterpriseDocumentChatException("Invocation error in ConversationalRAG", sys)
     
     def _load_llm(self):
@@ -78,18 +119,21 @@ class ConversationalRAG:
             llm = ModelLoader().load_llm()
             if not llm:
                 raise ValueError("LLM could not be loaded")
-            self.log.info("LLM loaded successfully", session_id=self.session_id)
+            log.info("LLM loaded successfully", session_id=self.session_id)
             return llm
         except Exception as e:
-            self.log.error("Failed to load LLM", error=str(e))
+            log.error("Failed to load LLM", error=str(e))
             raise EnterpriseDocumentChatException("LLM loading error in ConversationalRAG", sys)
         
     @staticmethod
     def _format_docs(docs):
-        return "\n\n".join(d.page_content for d in docs)
+        return "\n\n".join(getattr(d, "page_content", str(d)) for d in docs)
     
     def _build_lcel_chain(self):
         try:
+            if self.retriever is None:
+                raise EnterpriseDocumentChatException("No retriever set before building chain", sys)
+            
             # 1) Rewriting the question based on chat history
             question_rewriter = (
                 {"input": itemgetter("input"), "chat_history": itemgetter("chat_history")}
@@ -112,8 +156,8 @@ class ConversationalRAG:
                 | StrOutputParser()
             )
             
-            self.log.info("LCEL chain built successfully", session_id=self.session_id)
+            log.info("LCEL chain built successfully", session_id=self.session_id)
             
         except Exception as e:
-            self.log.error("Failed to build LCEL chain", error=str(e))
+            log.error("Failed to build LCEL chain", error=str(e), session_id=self.session_id)
             raise EnterpriseDocumentChatException("LCEL chain building error in ConversationalRAG", sys)

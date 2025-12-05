@@ -8,3 +8,4 @@ logs/
 data/
 test.py
 archive/
+faiss_index/

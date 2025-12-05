@@ -27,7 +27,7 @@ class EnterpriseDocumentChatException(Exception):
         while last_tb and last_tb.tb_next:
             last_tb = last_tb.tb_next
         
-        self.file_name = last_tb.tb_frame.f_code.co_filename if last_tb else "Unknown"
+        self.file_name = last_tb.tb_frame.f_code.co_filename if last_tb else "<unknown>"
         self.lineno = last_tb.tb_lineno if last_tb else -1
         self.error_message = norm_msg
         
@@ -49,10 +49,10 @@ class EnterpriseDocumentChatException(Exception):
     def __repr__(self):
         return f"EnterpriseDocumentChatException(file={self.file_name!r}, line={self.lineno}, message={self.error_message!r})"
     
-if __name__ == "__main__":
+# if __name__ == "__main__":
     
-    try:
-        a = 1 / 0
-    except Exception as e:
-        raise EnterpriseDocumentChatException("Division failed", e) from e
+#     try:
+#         a = 1 / 0
+#     except Exception as e:
+#         raise EnterpriseDocumentChatException("Division failed", e) from e
                 

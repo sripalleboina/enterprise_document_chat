@@ -1,7 +1,6 @@
-import os
 import sys
 from utils.model_loader import ModelLoader
-from logger.custom_logger import CustomLogger
+from logger import GLOBAL_LOGGER as log
 from exception.custom_exception import EnterpriseDocumentChatException
 from model.models import *
 from langchain_core.output_parsers import JsonOutputParser
@@ -15,7 +14,6 @@ class DocumentAnalyzer:
     """
     
     def __init__(self):
-        self.log = CustomLogger().get_logger(__name__)
         
         try:
             self.loader = ModelLoader()
@@ -26,12 +24,12 @@ class DocumentAnalyzer:
             
             self.prompt = PROMPT_REGISTRY["document_analysis"]
             
-            self.log.info("DocumentAnalyzer initialized successfully")
+            log.info("DocumentAnalyzer initialized successfully")
             
             
         
         except Exception as e:
-            self.log.error(f"Error during DocumentAnalyzer initialization: {e}")
+            log.error(f"Error during DocumentAnalyzer initialization: {e}")
             raise EnterpriseDocumentChatException("Error initializing DocumentAnalyzer", sys)
         
     
@@ -42,18 +40,19 @@ class DocumentAnalyzer:
         
         try: 
             chain = self.prompt | self.llm | self.fixing_parser
-            self.log.info("Document analysis chain created successfully")
+            
+            log.info("Document analysis chain created successfully")
             
             response = chain.invoke({
                 "format_instructions": self.parser.get_format_instructions(),
                 "document_text": document_text
             })
     
-            self.log.info("Document extraction successfully", keys=list(response.keys()))
+            log.info("Document extraction successfully", keys=list(response.keys()))
             
             return response
         
         
         except Exception as e:
-            self.log.error("Metadata analysis failed", error=str(e))
+            log.error("Metadata analysis failed", error=str(e))
             raise EnterpriseDocumentChatException("Error analyzing document", sys) 
