@@ -66,7 +66,7 @@ class ModelLoader:
         self.config = load_config()
         log.info("YAML config loaded", config_keys=list(self.config.keys()))
 
-    def load_embeddings(self):
+    def load_embedding_model(self):
         """
         Load and return embedding model from Google Generative AI.
         """
