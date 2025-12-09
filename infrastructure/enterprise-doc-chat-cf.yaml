@@ -25,7 +25,7 @@ Resources:
   MyECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: documentportal
+      RepositoryName: enterprise-document-chat
       ImageScanningConfiguration:
         ScanOnPush: true
       ImageTagMutability: MUTABLE
@@ -101,7 +101,7 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: document-portal-cluster
+      ClusterName: enterprise-document-chat-cluster
 
   ### ECS Execution Role with Secrets + Logs
   ECSExecutionRole:
@@ -147,7 +147,7 @@ Resources:
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: documentportaltd
+      Family: enterprise-document-chat-td
       Cpu: "1024"
       Memory: "8192"
       NetworkMode: awsvpc
@@ -155,7 +155,7 @@ Resources:
         - FARGATE
       ExecutionRoleArn: !GetAtt ECSExecutionRole.Arn
       ContainerDefinitions:
-        - Name: document-portal-container
+        - Name: enterprise-document-chat-container
           Image: !Ref ImageUrl
           Essential: true
           PortMappings:
@@ -175,7 +175,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: /ecs/documentportal
+              awslogs-group: /ecs/enterprise-document-chat-td
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
 
@@ -184,7 +184,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: AttachGateway
     Properties:
-      ServiceName: document-portal-service
+      ServiceName: enterprise-document-chat-service
       Cluster: !Ref ECSCluster
       LaunchType: FARGATE
       DesiredCount: 1
