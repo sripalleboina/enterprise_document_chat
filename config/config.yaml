@@ -14,7 +14,7 @@ retriever:
 llm:
   groq:
     provider: "groq"
-    model_name: "qwen/qwen3-32b"
+    model_name: "llama-3.3-70b-versatile"
     temperature: 0.0
     max_output_tokens: 2048
 
