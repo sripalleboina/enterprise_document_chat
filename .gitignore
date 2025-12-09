@@ -21,6 +21,7 @@ faiss_index/
 *.pkl
 
 # Notebooks & experiments
+notebooks/
 *.ipynb
 .ipynb_checkpoints/
 
