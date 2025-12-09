@@ -9,5 +9,3 @@ venv/
 .gitignore
 *.log
 logs/
-data/
-faiss_index/

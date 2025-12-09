@@ -22,21 +22,16 @@
         ],
         "environment": [
         {
-            "name": "LANGCHAIN_PROJECT",
-            "value": "ENTERPRISE DOCUMENT CHAT"
+            "name": "ENV",
+            "value": "production"
         }
         ],
         "secrets": [
         {
-            "name": "GROQ_API_KEY",
-            "valueFrom": "arn:aws:secretsmanager:us-east-2:668015627697:secret:apikeys-9bXo4F:GROQ_API_KEY"
-        },
-        
-        {
-            "name": "GOOGLE_API_KEY",
-            "valueFrom": "arn:aws:secretsmanager:us-east-2:668015627697:secret:apikeys-9bXo4F:GOOGLE_API_KEY"
+            "name": "API_KEYS",
+            "valueFrom": "arn:aws:secretsmanager:us-east-2:668015627697:secret:apikeys-9bXo4F"
         }
-        
+
         ],
         "logConfiguration": {
         "logDriver": "awslogs",
@@ -44,8 +39,7 @@
             "awslogs-group": "/ecs/enterprise-document-chat-td",
             "awslogs-region": "us-east-2",
             "awslogs-stream-prefix": "ecs",
-            "mode": "non-blocking",
-            "max-buffer-size": "25m"
+            "awslogs-create-group": "true"
         }
         }
     }
